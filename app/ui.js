@@ -129,7 +129,6 @@ const UI = {
             // Show the connect panel on first load unless autoconnecting
             UI.openConnectPanel();
         }
-
         return Promise.resolve(UI.rfb);
     },
 
@@ -175,6 +174,7 @@ const UI = {
         UI.initSetting('encrypt', (window.location.protocol === "https:"));
         UI.initSetting('view_clip', false);
         UI.initSetting('resize', 'off');
+        UI.initSetting('sensitivity', 1.5);
         UI.initSetting('quality', 6);
         UI.initSetting('compression', 2);
         UI.initSetting('shared', true);
@@ -231,6 +231,8 @@ const UI = {
 
         document.getElementById("noVNC_view_drag_button")
             .addEventListener('click', UI.toggleViewDrag);
+        document.getElementById("noVNC_relativemouse_button")
+            .addEventListener('click', UI.toggleRelativeMouse);
 
         document.getElementById("noVNC_control_bar_handle")
             .addEventListener('mousedown', UI.controlbarHandleMouseDown);
@@ -357,6 +359,8 @@ const UI = {
         UI.addSettingChangeHandler('resize');
         UI.addSettingChangeHandler('resize', UI.applyResizeMode);
         UI.addSettingChangeHandler('resize', UI.updateViewClip);
+        UI.addSettingChangeHandler('sensitivity');
+        UI.addSettingChangeHandler('sensitivity', UI.updateSensitivity);
         UI.addSettingChangeHandler('quality');
         UI.addSettingChangeHandler('quality', UI.updateQuality);
         UI.addSettingChangeHandler('compression');
@@ -849,6 +853,7 @@ const UI = {
         UI.updateSetting('encrypt');
         UI.updateSetting('view_clip');
         UI.updateSetting('resize');
+        UI.updateSetting('sensitivity');
         UI.updateSetting('quality');
         UI.updateSetting('compression');
         UI.updateSetting('shared');
@@ -1047,6 +1052,7 @@ const UI = {
         UI.rfb.clipViewport = UI.getSetting('view_clip');
         UI.rfb.scaleViewport = UI.getSetting('resize') === 'scale';
         UI.rfb.resizeSession = UI.getSetting('resize') === 'remote';
+        UI.rfb.mouseRelativeSensitivity = parseInt(UI.getSetting('sensitivity'));
         UI.rfb.qualityLevel = parseInt(UI.getSetting('quality'));
         UI.rfb.compressionLevel = parseInt(UI.getSetting('compression'));
         UI.rfb.showDotCursor = UI.getSetting('show_dot');
@@ -1383,9 +1389,22 @@ const UI = {
 
         UI.rfb.qualityLevel = parseInt(UI.getSetting('quality'));
     },
-
 /* ------^-------
  *   /QUALITY
+ * ==============
+ *  RELATIVE MOUSE
+ * ------v------*/
+    toggleRelativeMouse() {
+        alert("click where you want to lock the mouse to");
+        UI.rfb.requestRelativeMouse();
+    },
+    updateSensitivity() {
+        if (!UI.rfb) return;
+
+        UI.rfb.mouseRelativeSensitivity = parseInt(UI.getSetting('sensitivity'));
+    },
+/* ------^-------
+ *   /RELATIVE MOUSE
  * ==============
  *  COMPRESSION
  * ------v------*/
@@ -1685,6 +1704,8 @@ const UI = {
                 .classList.remove('noVNC_hidden');
             document.getElementById('noVNC_clipboard_button')
                 .classList.remove('noVNC_hidden');
+            document.getElementById('noVNC_relativemouse_button')
+                .classList.remove("noVNC_hidden");
         }
     },
 

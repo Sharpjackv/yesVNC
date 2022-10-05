@@ -188,6 +188,10 @@ export default class RFB extends EventTargetMixin {
         this._viewportHasMoved = false;
         this._accumulatedWheelDeltaX = 0;
         this._accumulatedWheelDeltaY = 0;
+        this._mouseRelativeOrigin = {};
+        this._mouseRelative = false;
+        this._waitingForOrigin = false;
+        this.mouseRelativeSensitivity = 1.5;
 
         // Gesture state
         this._gestureLastTapTime = null;
@@ -995,11 +999,38 @@ export default class RFB extends EventTargetMixin {
         let pos = clientToElement(ev.clientX, ev.clientY,
                                   this._canvas);
 
+        if (this._mouseRelative) {
+            pos = {
+                x: this._mouseRelativeOrigin.x + ev.movementX * this.mouseRelativeSensitivity,
+                y: this._mouseRelativeOrigin.y + ev.movementY * this.mouseRelativeSensitivity,
+            };
+            this._handleMouseMove(pos.x, pos.y);
+
+        }
         switch (ev.type) {
             case 'mousedown':
-                setCapture(this._canvas);
-                this._handleMouseButton(pos.x, pos.y,
-                                        true, 1 << ev.button);
+                if (this._waitingForOrigin) {
+                    this._mouseRelativeOrigin = pos;
+                    this._mouseRelative = true;
+                    this._waitingForOrigin = false;
+                    this._canvas.requestPointerLock();
+                    document
+                        .getElementById("noVNC_relativemouse_button")
+                        .classList.add("noVNC_selected");
+                    let handler = () => {
+                        if (document.pointerLockElement == this._canvas) return;
+                        this._mouseRelative = false;
+                        document
+                            .getElementById("noVNC_relativemouse_button")
+                            .classList.remove("noVNC_selected");
+                        // document.removeEventListener('pointerlockchange', handler);
+                    };
+                    document.addEventListener('pointerlockchange', handler);
+                } else {
+                    setCapture(this._canvas);
+                    this._handleMouseButton(pos.x, pos.y,
+                                            true, 1 << ev.button);
+                }
                 break;
             case 'mouseup':
                 this._handleMouseButton(pos.x, pos.y,
@@ -2656,6 +2687,10 @@ export default class RFB extends EventTargetMixin {
         this._updateCursor(rgba, hotx, hoty, w, h);
 
         return true;
+    }
+
+    requestRelativeMouse() {
+        this._waitingForOrigin = true;
     }
 
     _handleDesktopName() {

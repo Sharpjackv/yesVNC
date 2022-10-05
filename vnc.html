@@ -145,6 +145,11 @@
             </div>
             </div>
 
+            <!-- Toggle Relative Mouse -->
+            <input type = "image" alt = "Relative Mouse" src = "app/images/fullscreen.svg"
+                id = "noVNC_relativemouse_button" class = "noVNC_button noVNC_hidden"
+                title = "Relative Mouse">
+
             <!-- Toggle fullscreen -->
             <input type="image" alt="Full Screen" src="app/images/fullscreen.svg"
                 id="noVNC_fullscreen_button" class="noVNC_button noVNC_hidden"
@@ -182,6 +187,10 @@
                     <li>
                         <div class="noVNC_expander">Advanced</div>
                         <div><ul>
+                            <li>
+                                <label for="noVNC_setting_sensitivity">Relative Mouse Mode Sensitivity:</label>
+                                <input id="noVNC_setting_sensitivity" type="range" min="0.1" max="20" value="1.5">
+                            </li>
                             <li>
                                 <label for="noVNC_setting_quality">Quality:</label>
                                 <input id="noVNC_setting_quality" type="range" min="0" max="9" value="6">
