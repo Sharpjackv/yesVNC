@@ -1395,7 +1395,6 @@ const UI = {
  *  RELATIVE MOUSE
  * ------v------*/
     toggleRelativeMouse() {
-        alert("click where you want to lock the mouse to");
         UI.rfb.requestRelativeMouse();
     },
     updateSensitivity() {

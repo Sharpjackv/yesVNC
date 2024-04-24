@@ -191,6 +191,7 @@ export default class RFB extends EventTargetMixin {
         this._mouseRelativeOrigin = {};
         this._mouseRelative = false;
         this._waitingForOrigin = false;
+        this._mousesend = false;
         this.mouseRelativeSensitivity = 1.5;
 
         // Gesture state
@@ -1027,7 +1028,7 @@ export default class RFB extends EventTargetMixin {
                     };
                     document.addEventListener('pointerlockchange', handler);
                 } else {
-                    setCapture(this._canvas);
+                    setCapture(this._canvas); 
                     this._handleMouseButton(pos.x, pos.y,
                                             true, 1 << ev.button);
                 }
@@ -1038,8 +1039,12 @@ export default class RFB extends EventTargetMixin {
                 break;
             case 'mousemove':
                 this._handleMouseMove(pos.x, pos.y);
+
+                console.log("hey")
+
                 break;
         }
+
     }
 
     _handleMouseButton(x, y, down, bmask) {
@@ -2690,7 +2695,166 @@ export default class RFB extends EventTargetMixin {
     }
 
     requestRelativeMouse() {
-        this._waitingForOrigin = true;
+        function mousemove(event){
+            console.log("1" + " " + event.movementX + " " + event.movementY)
+            try {
+                socket.send("1" + " " +event.movementX + " " + event.movementY)
+            } catch (error){} 
+        }
+
+        function keydown(e){
+            let r = e.key
+            if(e.key == " "){
+                r = "space"
+            }
+            if(e.key == "ArrowLeft"){
+                r = "left"
+            }
+            if(e.key == "ArrowRight"){
+                r = "right"
+            }
+            if(e.key == "ArrowDown"){
+                r = "down"
+            }
+            if(e.key == "ArrowUp"){
+                r = "up"
+            }
+            try {
+                socket.send("2 1 " + r.toLowerCase())
+            } catch (error){} 
+        }
+
+        function keyup(e){
+            let r = e.key
+            if(e.key == " "){
+                r = "space"
+            }
+            if(e.key == "ArrowLeft"){
+                r = "left"
+            }
+            if(e.key == "ArrowRight"){
+                r = "right"
+            }
+            if(e.key == "ArrowDown"){
+                r = "down"
+            }
+            if(e.key == "ArrowUp"){
+                r = "up"
+            }
+            try {
+            socket.send("2 0 " + r.toLowerCase())
+            } catch (error){} 
+        }
+
+        function mousedown(e){
+            if(e.button == 0){
+                try {
+                socket.send("0 1")
+                } catch (error){} 
+                }
+                if(e.button == 2){
+                try {
+                socket.send("0 3")
+                } catch (error){} 
+                }
+        }
+
+        function mouseup(e){
+            if(e.button == 0){
+                try {
+                socket.send("0 0")
+                } catch (error){} 
+                }
+                if(e.button == 2){
+                try {
+                socket.send("0 2")
+                } catch (error){} 
+                }
+        }
+
+        function fullscreenchange(e){
+            document.removeEventListener("mousemove", mousemove);
+            document.removeEventListener("keydown", keydown);
+            document.removeEventListener("keyup", keyup);
+            document.removeEventListener("mousedown", mousedown);
+            document.removeEventListener("mouseup", mouseup);
+            document.removeEventListener("fullscreenchange", fullscreenchange);
+
+            console.log("exited fullscreen");
+        }
+
+        function handleVisibilityChange() {
+            if (document.visibilityState === 'hidden') {
+              console.log('Focus has left the current tab.');
+              if(document.fullscreenElement != null){
+                fullscreenchange();
+              }
+            }
+        }
+
+        this._mousesend = true;
+
+        let socket = new WebSocket ( "wss://winws2.sh4rph.tech" )
+
+        document.getElementById("noVNC_container").requestPointerLock();
+        document.addEventListener('fullscreenchange', async () => {
+            try {
+              if (document.fullscreenElement != null) {
+                await navigator.keyboard.lock(["Escape","ControlLeft", "ControlRight", "Tab", "AltLeft", "AltRight"]);        
+                console.log('Keyboard locked.');
+              } else {
+                fullscreenchange();
+              }
+            } catch (error) {
+              console.log(error);
+            }
+          });          
+        document.getElementById("noVNC_container").requestFullscreen();
+
+
+
+
+        document.addEventListener("mousemove", mousemove);
+        document.addEventListener("keydown", keydown);
+        document.addEventListener("keyup", keyup);
+        document.addEventListener("mousedown", mousedown);
+        document.addEventListener("mouseup", mouseup);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+
+        /*const socket = new WebSocket("wss://winws.sh4rp.tech/ws");
+
+        const fullscreen = async () => {
+        try {
+            await document.documentElement.requestFullscreen();
+        } catch (err) {
+            alert(`${err.name}: ${err.message}`);
+        }
+        };
+
+
+        const supportsKeyboardLock =
+            ('keyboard' in navigator) && ('lock' in navigator.keyboard);
+
+        if (supportsKeyboardLock) {
+        document.addEventListener('fullscreenchange', async () => {
+            if (document.fullscreenElement) {
+            await navigator.keyboard.lock(['Escape']);        
+            return console.log('Keyboard locked.');
+            }
+            navigator.keyboard.unlock();
+            console.log('Keyboard unlocked.');
+        });
+        }
+
+        
+            if (supportsKeyboardLock) {
+                document.getElementById("noVNC_container").requestPointerLock();
+                navigator.keyboard.lock(['Escape']);
+              console.log('Keyboard locked.');
+            }
+            fullscreen();
+*/
     }
 
     _handleDesktopName() {
